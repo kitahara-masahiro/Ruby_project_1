@@ -13,6 +13,11 @@ class BookInfo
   # 最初に検討する属性に対するアクセサを提供する
   attr_accessor :title, :author, :page, :publish_date
 
+  # BookInfoクラスのインスタンスをcsv形式へ変換する
+  def to_csv(key)
+    "#{key},#{@title},#{@author},#{@page},#{@publish_date}\n"
+  end
+
   # BookInfoクラスのインスタンスの文字列表現を返す
   def to_s
     "#{@title}, #{@author}, #{@page}, #{@publish_date}"
@@ -27,34 +32,26 @@ class BookInfo
 end
 
 class BookInfoManager
-  def initialize
+  def initialize(filename)
+    # 初期化でcsvファイルを指定する
+    @csv_file_name = filename
+    # 蔵書データのハッシュ
     @book_infos = {}
   end
 
   # 蔵書データをセットアップする
   def set_up
-    # 複数冊の蔵書データを登録する
-    @book_infos["Yamada2005"] = BookInfo.new(
-        "実践アジャイル　ソフトウェア開発法とプロジェクト管理",
-        "山田　正樹",
-        248,
-        Date.new( 2005, 1, 25 )
-    )
-
-    @book_infos["Ooba2006"] = BookInfo.new(
-        "入門LEGO MINDSTORMS NXT レゴブロックで作る動くロボット",
-        "大庭　慎一郎",
-        164,
-        Date.new( 2006, 12, 23 )
-    )
-
-    @book_infos["kuboaki20012"] = BookInfo.new(
-        "作りながら学ぶRuby入門　第２版",
-        "久保秋　真",
-        479,
-        Date.new( 2012, 11, 27 )
-    )
-
+    # csvファイルを読み込みモードでオープンする
+    open(@csv_file_name, "r:UTF-8") {|file|
+      # ファイルの行を1行ずつ取り出して、lineに読み込む
+      file.each {|line|
+        # lineからchompで改行を除き、splitでカンマ区切りに分割し、左辺のそれぞれの項目へ多重代入する
+        key, title, author, page, publish_date = line.chomp.split(',')
+        # 蔵書データ1件分のインスタンスを作成してハッシュに登録する
+        # strptimeは、文字列からDateクラスのインスタンスを作成するメソッド
+        @book_infos[key] = BookInfo.new(title, author, page.to_i, Date.strptime(publish_date))
+      }
+    } # ファイルが閉じられる
   end
 
   # 蔵書データを登録する
@@ -217,17 +214,29 @@ class BookInfoManager
     end
   end
 
+  # 蔵書データを全件ファイルへ書き込んで保存する
+  def save_all_book_infos
+    # csvファイルを書き込みモードで開く
+    open(@csv_file_name, "w:UTF-8") {|file|
+      @book_infos.each {|key, info|
+        file.print(info.to_csv(key))
+      } # 1行ずつの処理の終わり
+      puts "\nファイルへ保存しました"
+    }
+  end
+
   # 処理の選択と選択後の処理を繰り返す
   def run
     while true
       # 機能選択画面を表示する
       print "
-　1. 蔵書データの登録
-　2. 蔵書データの表示
-　3. 蔵書データの検索
-　9. 終了
+  1. 蔵書データの登録
+  2. 蔵書データの表示
+  3. 蔵書データの検索
+  8. 蔵書データのファイルへの保存
+  9. 終了
 
-番号を選んでください (1, 2, 3, 9): "
+番号を選んでください (1, 2, 3, 8, 9): "
 
       # 文字の入力を待つ
       num = gets.chomp
@@ -241,6 +250,9 @@ class BookInfoManager
         when '3' == num
           # 蔵書データの検索
           search_book_info
+        when '8' == num
+          # 蔵書データをファイルへ保存
+          save_all_book_infos
         when '9' == num
           # アプリケーションの終了（このbreakはwhile文を中断させる）
           break
@@ -252,15 +264,10 @@ class BookInfoManager
 end
 
 # アプリケーションのインスタンスを作る
-book_info_manager = BookInfoManager.new
+book_info_manager = BookInfoManager.new("book_info.csv")
 
 # BookInfoManagerの蔵書データをセットアップする
 book_info_manager.set_up
 
 # BookInfoManagerの処理の選択と選択後の処理を繰り返す
 book_info_manager.run
-
-
-
-
-
