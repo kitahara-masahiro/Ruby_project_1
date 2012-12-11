@@ -21,7 +21,7 @@ class BookInfo
   # 蔵書データを書式を付けて出力する操作を追加
   # 項目の区切り文字を引数に指定することができる
   # 引数を省略した場合は改行を区切り文字にする
-  def toFormattedString( sep = "\n" )
+  def to_formatted_string( sep = "\n" )
     "書籍名： #{@title}#{sep}著者名： #{@author}#{sep}ページ数： #{@page}ページ#{sep}発行日： #{@publish_date}#{sep}"
   end
 end
@@ -32,7 +32,7 @@ class BookInfoManager
   end
 
   # 蔵書データをセットアップする
-  def setUp
+  def set_up
     # 複数冊の蔵書データを登録する
     @book_infos["Yamada2005"] = BookInfo.new(
         "実践アジャイル　ソフトウェア開発法とプロジェクト管理",
@@ -58,7 +58,7 @@ class BookInfoManager
   end
 
   # 蔵書データを登録する
-  def addBookInfo
+  def add_book_info
     # 蔵書データ1件分のインスタンスを作成する
     book_info = BookInfo.new( "", "", 0, Date.new )
 
@@ -92,10 +92,10 @@ class BookInfoManager
   end
 
   # 蔵書データの一覧を表示する
-  def listAllBookInfos
+  def list_all_book_infos
     puts "\n------------------------------------------------------------------"
     @book_infos.each { |key, info|
-      print info.toFormattedString
+      print info.to_formatted_string
       puts "\n------------------------------------------------------------------"
     }
   end
@@ -195,7 +195,7 @@ class BookInfoManager
     if @search_result != [] then
       puts "\n------------------------------------------------------------------"
       @search_result.each { |info|
-        print info.toFormattedString
+        print info.to_formatted_string
         puts "\n------------------------------------------------------------------"
       }
     else
@@ -207,7 +207,7 @@ class BookInfoManager
   end
 
   # 蔵書データを検索する際の一連の動作
-  def searchBookInfo
+  def search_book_info
     input
     confirm
     caution
@@ -234,13 +234,13 @@ class BookInfoManager
       case
         when '1' == num
           # 蔵書データの登録
-          addBookInfo
+          add_book_info
         when '2' == num
           # 蔵書データの表示
-          listAllBookInfos
+          list_all_book_infos
         when '3' == num
           # 蔵書データの検索
-          searchBookInfo
+          search_book_info
         when '9' == num
           # アプリケーションの終了（このbreakはwhile文を中断させる）
           break
@@ -255,7 +255,7 @@ end
 book_info_manager = BookInfoManager.new
 
 # BookInfoManagerの蔵書データをセットアップする
-book_info_manager.setUp
+book_info_manager.set_up
 
 # BookInfoManagerの処理の選択と選択後の処理を繰り返す
 book_info_manager.run
