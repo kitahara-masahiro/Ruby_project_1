@@ -47,15 +47,24 @@ class BookInfoManager
         164,
         Date.new( 2006, 12, 23 )
     )
+
+    @book_infos["kuboaki20012"] = BookInfo.new(
+        "作りながら学ぶRuby入門　第２版",
+        "久保秋　真",
+        479,
+        Date.new( 2012, 11, 27 )
+    )
+
   end
 
   # 蔵書データを登録する
   def addBookInfo
     # 蔵書データ1件分のインスタンスを作成する
     book_info = BookInfo.new( "", "", 0, Date.new )
+
     # 登録するデータを項目ごとに入力する
     print "\n"
-    print "キー： "
+    print "登録コード： "
     key = gets.chomp
     print "書籍名： "
     book_info.title = gets.chomp
@@ -69,10 +78,17 @@ class BookInfoManager
     month = gets.chomp.to_i
     print "発行日： "
     date = gets.chomp.to_i
-    book_info.publish_date = Date.new( year, month, date )
+    if year == 0 && month == 0 && date == 0 then
+      book_info.publish_date = nil
+    else
+      book_info.publish_date = Date.new( year, month, date )
+    end
 
     # 作成した蔵書データの1件分をハッシュに登録する
-    @book_infos[key] = book_info
+    if book_info.title != "" then
+      @book_infos[key] = book_info
+    end
+
   end
 
   # 蔵書データの一覧を表示する
@@ -80,33 +96,155 @@ class BookInfoManager
     puts "\n------------------------------------------------------------------"
     @book_infos.each { |key, info|
       print info.toFormattedString
-    puts "\n------------------------------------------------------------------"
+      puts "\n------------------------------------------------------------------"
     }
+  end
+
+  # 検索したい語句を入力する
+  def input
+    # 蔵書データ1件分のインスタンスを作成する
+    @search_term = BookInfo.new( "", "", 0, Date.new )
+
+    # 検索するデータを項目ごとに入力する
+    puts ""
+    puts "**********************************"
+    puts "検索したい語句を入力してください。"
+    print "書籍名： "
+    @search_term.title = gets.chomp.to_s
+    print "著者名： "
+    @search_term.author = gets.chomp.to_s
+    print "ページ数： "
+    @search_term.page = gets.chomp.to_i
+    print "発行年： "
+    year = gets.chomp
+    print "発行月： "
+    month = gets.chomp
+    print "発行日： "
+    date = gets.chomp
+
+    if year == "" && month == "" && date == "" then
+      # 発行日に関する入力がなかった場合、発行日にはnilを入力
+      @search_term.publish_date = nil
+    else
+      year = year.to_i
+      month = month.to_i
+      date = date.to_i
+      @search_term.publish_date = Date.new( year, month, date )
+    end
+  end
+
+  # 検索のために入力した語句を確認する
+  def confirm
+    display_search_term = @search_term
+    if @search_term.title == ""
+      display_search_term.title = "指定しない"
+    end
+    if @search_term.author == ""
+      display_search_term.author = "指定しない"
+    end
+    if @search_term.page == 0
+      display_search_term.page = "指定しない"
+    end
+    if @search_term.publish_date == nil
+      display_search_term.publish_date = "指定しない"
+    end
+    puts ""
+    puts "**********************************"
+    puts "以下の条件で検索します。"
+    puts "書籍名： " + display_search_term.title.to_s
+    puts "著者名： " + display_search_term.author.to_s
+    puts "ページ数： " + display_search_term.page.to_s
+    puts "発行日： " + display_search_term.publish_date.to_s
+    puts ""
+  end
+
+  # 検索の実行を尋ねる
+  def caution
+    puts "検索を実行してもよろしいですか？　(yes/no)"
+    while true
+      @judge = gets.chomp.to_s
+      case
+        when @judge != "yes" && @judge != "no" then
+          puts "yes または no を入力してください。"
+        else
+          break
+      end
+    end
+  end
+
+  # 蔵書データの検索
+  def search
+    @search_result = []
+    @book_infos.each do |key, info|
+      check_title = info.title.include?(@search_term.title)
+      check_author = info.author.include?(@search_term.author)
+      if info.page == @search_term.page then
+        check_page = true
+      end
+      if info.publish_date == @search_term.publish_date then
+        check_publish_date = true
+      end
+      if check_title == true || check_author == true || check_page == true || check_publish_date == true then
+        @search_result << info
+      end
+    end
+  end
+
+  # 検索結果の表示
+  def output
+    if @search_result != [] then
+      puts "\n------------------------------------------------------------------"
+      @search_result.each { |info|
+        print info.toFormattedString
+        puts "\n------------------------------------------------------------------"
+      }
+    else
+      puts ""
+      puts "------------------------------------------------------------------"
+      puts "検索されませんでした。"
+      puts "------------------------------------------------------------------"
+    end
+  end
+
+  # 蔵書データを検索する際の一連の動作
+  def searchBookInfo
+    input
+    confirm
+    caution
+    if @judge == "yes"
+      search
+      output
+    end
   end
 
   # 処理の選択と選択後の処理を繰り返す
   def run
-    loop do
+    while true
       # 機能選択画面を表示する
       print "
-      1. 蔵書データの登録
-      2. 蔵書データの表示
-      9. 終了
-      番号を選んでください (1, 2, 9): "
+　1. 蔵書データの登録
+　2. 蔵書データの表示
+　3. 蔵書データの検索
+　9. 終了
+
+番号を選んでください (1, 2, 3, 9): "
 
       # 文字の入力を待つ
       num = gets.chomp
       case
-      when '1' == num
+        when '1' == num
           # 蔵書データの登録
           addBookInfo
-      when '2' == num
+        when '2' == num
           # 蔵書データの表示
           listAllBookInfos
-      when '9' == num
+        when '3' == num
+          # 蔵書データの検索
+          searchBookInfo
+        when '9' == num
           # アプリケーションの終了（このbreakはwhile文を中断させる）
           break
-      else
+        else
           # 処理待ち画面に戻る
       end
     end
